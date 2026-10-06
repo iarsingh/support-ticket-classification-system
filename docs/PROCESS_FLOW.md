@@ -13,7 +13,7 @@ flowchart TD
   C --> D{"All counts zero?"}
   D -->|"Yes"| U["Label unknown"]
   D -->|"No"| L["Highest count; lexical label breaks ties"]
-  U --> O["Return label, counts, token count"]
+  U --> O["Return label, matched evidence, and review signals"]
   L --> O
 ```
 
@@ -26,7 +26,7 @@ flowchart TD
   C["Create tenant-scoped workspace"] --> J["Submit job: workspace + payload + target"]
   J --> V{"Workspace belongs to selected tenant?"}
   V -->|"No"| E["HTTP 404"]
-  V -->|"Yes"| P{"Target is prod or production?"}
+  V -->|"Yes"| P{"Normalized target is prod or production?"}
   P -->|"Yes"| Q["pending_approval"]
   P -->|"No"| L["queued"]
   Q --> A["Approval request"]
@@ -36,4 +36,4 @@ flowchart TD
   K --> S["No executor / no production apply"]
 ```
 
-Approval first checks job ownership using the selected tenant. Status changes and audit records remain in memory. The approval endpoint does not enforce a full transition state machine: repeated lab approval is possible. The domain request flow and this job-record flow are independent. Source: [ops.py](../src/tickets/ops.py).
+Approval first checks job ownership using the selected tenant. Status changes and audit records remain in memory. Repeated lab approval returns the original approval without duplicating its event or counter. Ops transitions are protected by an in-process lock. The domain request flow and this job-record flow are independent. Source: [ops.py](../src/tickets/ops.py).

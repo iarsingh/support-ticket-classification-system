@@ -22,19 +22,19 @@ Source: [src/tickets/classify.py](src/tickets/classify.py).
 
 ## 4. How are tied labels resolved?
 
-`max` compares `(counts[name], name)`. For equal counts the lexicographically greatest label wins. For example, one billing hit and one outage hit yields outage.
+`max` compares `(counts[name], name)`. For equal counts the lexicographically greatest label wins. For example, one billing hit and one outage hit yields outage, with both tied labels reported and `needs_review: true`.
 
 Source: [src/tickets/classify.py](src/tickets/classify.py).
 
 ## 5. When is unknown returned?
 
-If all three counts are zero, the label is replaced with `unknown`. An empty input is different: it raises `InputError` and the handler returns 422.
+If all three counts are zero, the label is replaced with `unknown` and human review is flagged. An empty input is different: it raises `InputError` and the handler returns 422.
 
 Source: [src/tickets/classify.py](src/tickets/classify.py).
 
 ## 6. What does the response explain?
 
-It contains the chosen label, all category counts, and the total token count. These values show the keyword evidence but do not establish that the routing decision is correct.
+It contains the chosen label, all category counts, and the total token count. The response also includes matched keywords, tied labels, `needs_review`, and a review reason. These are evidence and routing-review signals, not a calibrated probability.
 
 Source: [src/tickets/classify.py](src/tickets/classify.py).
 
@@ -70,7 +70,7 @@ Source: [src/tickets/ops.py](src/tickets/ops.py).
 
 ## 12. What happens when a production job is approved?
 
-Targets exactly equal to `prod` or `production` create a `pending_approval` job and approval returns HTTP 403. Other target strings are queued. Approval of a lab job changes its status only; it does not execute a workload.
+Targets are trimmed and normalized to lowercase before policy checks. `prod` and `production`, including case/padding variants, create a `pending_approval` job and approval returns HTTP 403. Repeated lab approval is idempotent; approval changes a record only, without executing a workload.
 
 Source: [src/tickets/ops.py](src/tickets/ops.py).
 
